@@ -9,11 +9,14 @@ namespace Finance
 {
     [ApiController]
     [Route("[controller]/[action]/{id?}")]
-    public class FinanceController : ControllerBase
+    public class FinanceController : ControllerBase, IActionFilter
     {
         protected IDictionary<string, object> GetProperties()
             => HttpContext.Items["_financeProps"] as IDictionary<string, object>
                ?? new Dictionary<string, object>();
+
+        public virtual void OnActionExecuting(ActionExecutingContext context) { }
+        public virtual void OnActionExecuted(ActionExecutedContext context) { }
 
         public FinanceResponse CreateResponse(FinanceResult result)
         {
