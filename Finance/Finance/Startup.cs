@@ -1,32 +1,36 @@
-﻿
-using Owin;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Formatting;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Http;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Finance
 {
     public class Startup
     {
-        // This code configures Web API. The Startup class is specified as a type
-        // parameter in the WebApp.Start method.
-        public void Configuration(IAppBuilder appBuilder)
+        public void ConfigureServices(IServiceCollection services)
         {
-            // Configure Web API for self-host. 
-            HttpConfiguration config = new HttpConfiguration();
-            config.Routes.MapHttpRoute(
-                name: "DefaultApi",
-                routeTemplate: "{controller}/{action}/{id}",
-                defaults: new { id = RouteParameter.Optional }
-            );
-            config.MessageHandlers.Add(new MessageHandler());
-            config.MessageHandlers.Add(new OAuth2Handler());
-            config.Filters.Add(new WebApiExceptionFilterAttribute());
-            appBuilder.UseWebApi(config);
+            services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
+            services.AddControllers(options =>
+            {
+                options.Filters.Add<WebApiExceptionFilterAttribute>();
+            })
+            .AddNewtonsoftJson();
+        }
+
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            app.Use(async (context, next) =>
+            {
+                context.Request.EnableBuffering();
+                await next();
+            });
+            app.UseMiddleware<LoggingMiddleware>();
+            app.UseMiddleware<FinanceAuthMiddleware>();
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }

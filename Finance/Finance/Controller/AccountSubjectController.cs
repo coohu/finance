@@ -1,50 +1,46 @@
-﻿using Finance.Utils;
 using Finance.Account.SDK;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Http;
+using Finance.Account.SDK.Request;
 using Finance.Account.SDK.Response;
 using Finance.Account.Service;
-using Finance.Account.SDK.Request;
-using System.Web.Http.Controllers;
+using Finance.Utils;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using System.Collections.Generic;
 
 namespace Finance.Controller
 {
     public class AccountSubjectController : FinanceController
     {
-        ILogger logger = Logger.GetLogger(typeof(AccountSubjectController));
-        AccountSubjectService service = null;    
-        protected override void Initialize(HttpControllerContext controllerContext)
+        private readonly ILogger logger = Logger.GetLogger(typeof(AccountSubjectController));
+        private AccountSubjectService service;
+
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
-            service = AccountSubjectService.GetInstance(controllerContext.Request.Properties);
-            base.Initialize(controllerContext);
+            service = AccountSubjectService.GetInstance(GetProperties());
+            base.OnActionExecuting(context);
         }
 
-        public FinanceResponse List(AccountSubjectListRequest request)
+        [HttpPost]
+        public FinanceResponse List([FromBody] AccountSubjectListRequest request)
         {
             List<AccountSubject> lst = service.List(request.Status);
-            return new AccountSubjectListResponse { Content = lst };           
+            return new AccountSubjectListResponse { Content = lst };
         }
 
-       
+        [HttpPost]
         public AccountSubjectResponse Find(long id)
         {
             var aso = service.Find(id);
             return new AccountSubjectResponse { Content = aso };
         }
-        
-        public FinanceResponse Save(AccountSubjectSaveRequest request)
+
+        [HttpPost]
+        public FinanceResponse Save([FromBody] AccountSubjectSaveRequest request)
         {
             service.Save(request.Content);
             return CreateResponse(FinanceResult.SUCCESS);
         }
-       
+
         [HttpPost]
         public FinanceResponse Delete(long id)
         {
@@ -52,12 +48,11 @@ namespace Finance.Controller
             return CreateResponse(FinanceResult.SUCCESS);
         }
 
-        public FinanceResponse SetStatus(AccountSubjectSetStatusRequest request)
+        [HttpPost]
+        public FinanceResponse SetStatus([FromBody] AccountSubjectSetStatusRequest request)
         {
-            service.SetStatus(request.id,request.Status);
+            service.SetStatus(request.id, request.Status);
             return CreateResponse(FinanceResult.SUCCESS);
         }
-
-    
     }
 }

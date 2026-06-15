@@ -1,61 +1,57 @@
-﻿using Finance.Account.SDK;
+using Finance.Account.SDK;
 using Finance.Account.SDK.Request;
 using Finance.Account.SDK.Response;
 using Finance.Account.Service;
 using Finance.Utils;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
-using System.Web.Http;
-using System.Web.Http.Controllers;
 
 namespace Finance.Controller
 {
     public class CashflowController : FinanceController
     {
-        ILogger logger = Logger.GetLogger(typeof(CashflowController));
-        CashflowSevice service = null;
-      
-        protected override void Initialize(HttpControllerContext controllerContext)
+        private readonly ILogger logger = Logger.GetLogger(typeof(CashflowController));
+        private CashflowSevice service;
+
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
-            service = CashflowSevice.GetInstance(controllerContext.Request.Properties);
-            base.Initialize(controllerContext);
+            service = CashflowSevice.GetInstance(GetProperties());
+            base.OnActionExecuting(context);
         }
 
-        public CashflowSheetResponse ListSheet(CashflowSheetRequest request)
+        [HttpPost]
+        public CashflowSheetResponse ListSheet([FromBody] CashflowSheetRequest request)
         {
             Dictionary<string, string> filter = request.filter;
             var lst = service.ListSheet(filter);
             return new CashflowSheetResponse { Content = lst };
         }
-        
-        public HttpResponseMessage Export(CashflowSheetExportRequest request)
+
+        [HttpPost]
+        public IActionResult Export([FromBody] CashflowSheetExportRequest request)
         {
-            ExcelExportor exportor = new ExcelExportor(new CashflowExportHandler());
-            Dictionary<string, string> filter = request.filter;           
+            var exportor = new ExcelExportor(new CashflowExportHandler());
+            Dictionary<string, string> filter = request.filter;
             var lst = service.ListSheet(filter);
             var dt = EntityConvertor<CashflowSheetItem>.ToDataTable(lst);
 
-            MemoryStream ms = new MemoryStream();
+            var ms = new MemoryStream();
             exportor.Export(ms, dt, ".xls");
 
-            string relativePath = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;     
-            string sPath = Path.Combine(Path.GetFullPath(relativePath), "Cache");
+            string sPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache");
             if (!Directory.Exists(sPath))
-            {
                 Directory.CreateDirectory(sPath);
-            }
+
             string fileName = SerialNoService.GetUUID() + ".xls";
             string filePath = Path.Combine(sPath, fileName);
-            using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+            using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
                 byte[] data = ms.ToArray();
                 fs.Write(data, 0, data.Length);
@@ -63,23 +59,14 @@ namespace Finance.Controller
             }
             ms.Close();
             ms.Dispose();
-            
-            var stream = new FileStream(filePath, FileMode.Open);
-            HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
-            response.Content = new StreamContent(stream);
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.ms-excel");
-            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-            {
-                FileName = fileName
-            };
 
             //System.IO.File.Delete(filePath);
 
-            return response;
+            var stream = new FileStream(filePath, FileMode.Open);
+            return File(stream, "application/vnd.ms-excel", fileName);
         }
 
-
-        class CashflowExportHandler : IExportHandler
+        private class CashflowExportHandler : IExportHandler
         {
             public void Encode(ref DataTable data)
             {
@@ -89,7 +76,5 @@ namespace Finance.Controller
                 data.Columns["_Amount"].Caption = "金额";
             }
         }
-
     }
-    
 }

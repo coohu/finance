@@ -1,6 +1,6 @@
-﻿using Finance.Utils;
-using System.Net.Http;
-using System.Threading;
+using Finance.Utils;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Finance
@@ -8,42 +8,36 @@ namespace Finance
     /// <summary>
     /// 消息处理程序
     /// </summary>
-    public class MessageHandler : DelegatingHandler
+    public class LoggingMiddleware
     {
-        ILogger logger = Logger.GetLogger(typeof(MessageHandler));
-        /// <summary>
-        /// 重写发送HTTP请求到内部处理程序的方法
-        /// </summary>
-        /// <param name="request">请求信息</param>
-        /// <param name="cancellationToken">取消操作的标记</param>
-        /// <returns></returns>
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        private readonly RequestDelegate _next;
+        private readonly ILogger _logger = Logger.GetLogger(typeof(LoggingMiddleware));
+
+        public LoggingMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
+
+        public async Task InvokeAsync(HttpContext context)
         {
             // 记录请求内容
-            if (request.Content != null)
-            {
-                logger.Info(string.Format("请求Content:{0}\t{1}",request.RequestUri, request.Content.ReadAsStringAsync().Result));
-            }
+            var requestBody = await new StreamReader(context.Request.Body).ReadToEndAsync();
+            context.Request.Body.Position = 0;
+            _logger.Info(string.Format("请求Content:{0}\t{1}", context.Request.Path, requestBody));
 
+            var originalBody = context.Response.Body;
+            using var responseBody = new MemoryStream();
+            context.Response.Body = responseBody;
 
             // 发送HTTP请求到内部处理程序，在异步处理完成后记录响应内容
-            return base.SendAsync(request, cancellationToken).ContinueWith<HttpResponseMessage>(
-            (task) =>
-            {                
-                if (task.Result.Content == null)
-                {
-                    logger.Info(string.Format("响应\tStatusCode:{0}\tContent:null", task.Result.StatusCode));
-                }
-                else
-                {
-                    // 记录响应内容
-                    logger.Info(string.Format("响应\tStatusCode:{0}\tContent:{1}", task.Result.StatusCode, task.Result.Content.ReadAsStringAsync().Result));
-                }
-                return task.Result;
-                
-            }
-            );
+            await _next(context);
+
+            responseBody.Seek(0, SeekOrigin.Begin);
+            var responseText = await new StreamReader(responseBody).ReadToEndAsync();
+            _logger.Info(string.Format("响应\tStatusCode:{0}\tContent:{1}", context.Response.StatusCode, responseText));
+
+            responseBody.Seek(0, SeekOrigin.Begin);
+            await responseBody.CopyToAsync(originalBody);
         }
     }
-
 }

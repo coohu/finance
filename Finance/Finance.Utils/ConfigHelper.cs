@@ -18,7 +18,7 @@ namespace Finance.Utils
 
         public string Path { set { file = value; } }
     
-        private string file = AppDomain.CurrentDomain.BaseDirectory + "/Finance.exe.config";
+        private string file = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile;
         public string XmlReadConnectionString(string name)
         {
             XmlDocument xDoc = new XmlDocument();

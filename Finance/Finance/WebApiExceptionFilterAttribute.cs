@@ -1,34 +1,33 @@
-﻿using Finance.Account.SDK;
+using Finance.Account.SDK;
 using Finance.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Http.Filters;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Finance
 {
     public class WebApiExceptionFilterAttribute : ExceptionFilterAttribute
     {
-        ILogger logger = Logger.GetLogger(typeof(WebApiExceptionFilterAttribute));
+        private readonly ILogger _logger = Logger.GetLogger(typeof(WebApiExceptionFilterAttribute));
+
         //重写基类的异常处理方法
-        public override void OnException(HttpActionExecutedContext actionExecutedContext)
+        public override void OnException(ExceptionContext context)
         {
             //1.异常日志记录（正式项目里面一般是用log4net记录异常日志）
-            logger.Error(actionExecutedContext.Exception);
+            _logger.Error(context.Exception);
 
             //2.返回调用方具体的异常信息
-            if (actionExecutedContext.Exception is FinanceException)
+            if (context.Exception is FinanceException)
             {
-                FinanceResponse fex = new FinanceResponse();
-                fex.Result = actionExecutedContext.Exception.HResult;
-                fex.ErrMsg = actionExecutedContext.Exception.Message;
-                actionExecutedContext.Response = actionExecutedContext.Request.CreateResponse(HttpStatusCode.OK, fex);
-            }          
-            base.OnException(actionExecutedContext);
+                var fex = new FinanceResponse
+                {
+                    Result = context.Exception.HResult,
+                    ErrMsg = context.Exception.Message
+                };
+                context.Result = new OkObjectResult(fex);
+                context.ExceptionHandled = true;
+            }
+
+            base.OnException(context);
         }
     }
 }

@@ -1,180 +1,58 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{10A24166-EC67-4D39-9873-58E3D4A18688}</ProjectGuid>
     <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <RootNamespace>FinanceAcountManager</RootNamespace>
     <AssemblyName>FinanceAcountManager</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
+    <UseWPF>true</UseWPF>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
     <OutputPath>..\bin\client\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
     <OutputPath>..\release\client\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationIcon>favicon.ico</ApplicationIcon>
-  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="4.6.0" />
+  </ItemGroup>
+
   <ItemGroup>
     <Reference Include="Arthas">
       <HintPath>..\packages\Arthas\Arthas.dll</HintPath>
     </Reference>
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="System" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.ServiceProcess" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
-    <Reference Include="WindowsBase" />
-    <Reference Include="Xceed.Wpf.Toolkit">
-      <HintPath>..\packages\Extended.Wpf.Toolkit.3.4.0\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
-    </Reference>
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="FormServiceManager.xaml.cs">
-      <DependentUpon>FormServiceManager.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="ServiceHelper.cs" />
-    <Compile Include="ServiceManager.xaml.cs">
-      <DependentUpon>ServiceManager.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="AccoutUser.xaml.cs">
-      <DependentUpon>AccoutUser.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="AccoutManager.xaml.cs">
-      <DependentUpon>AccoutManager.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="CommondHandler.cs" />
-    <Compile Include="FormAccountLogin.xaml.cs">
-      <DependentUpon>FormAccountLogin.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="FormAccountUserPopup.xaml.cs">
-      <DependentUpon>FormAccountUserPopup.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="FormAccountManagerPopup.xaml.cs">
-      <DependentUpon>FormAccountManagerPopup.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Update="app.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Finance.Account.SDK\Finance.Account.SDK.csproj">
-      <Project>{198228EF-8952-4D60-8A79-4714377EE1F6}</Project>
-      <Name>Finance.Account.SDK</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Finance.Account.Source\Finance.Account.Source.csproj">
-      <Project>{e908027d-8d41-4b61-b30a-cfd064a640b0}</Project>
-      <Name>Finance.Account.Source</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Finance.UI\Finance.UI.csproj">
-      <Project>{9d39d70e-a188-496c-8d98-fd0320950ba0}</Project>
-      <Name>Finance.UI</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Finance.Utils\Finance.Utils.csproj">
-      <Project>{927c43ec-e776-4337-951b-803ad5867499}</Project>
-      <Name>Finance.Utils</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </ApplicationDefinition>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="FormServiceManager.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="ServiceManager.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="AccoutUser.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="AccoutManager.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="FormAccountLogin.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="FormAccountUserPopup.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="FormAccountManagerPopup.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="MainWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
+
   <ItemGroup>
     <Resource Include="Resources\editIcon.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\icon.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\iconMove.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\tabIcon.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\titleMuenIcon.png" />
   </ItemGroup>
+
   <ItemGroup>
-    <Content Include="favicon.ico" />
+    <ProjectReference Include="..\Finance.Account.SDK\Finance.Account.SDK.csproj" />
+    <ProjectReference Include="..\Finance.Account.Source\Finance.Account.Source.csproj" />
+    <ProjectReference Include="..\Finance.UI\Finance.UI.csproj" />
+    <ProjectReference Include="..\Finance.Utils\Finance.Utils.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
 </Project>

@@ -1,78 +1,82 @@
-﻿using Finance.Account.SDK;
+using Finance.Account.SDK;
 using Finance.Account.SDK.Request;
 using Finance.Account.SDK.Response;
 using Finance.Account.Service;
 using Finance.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Http;
-using System.Web.Http.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Finance.Controller
 {
     public class SystemProfileController : FinanceController
     {
-        ILogger logger = Logger.GetLogger(typeof(SystemProfileController));
-        SystemProfileService service = null;
-        protected override void Initialize(HttpControllerContext controllerContext)
+        private readonly ILogger logger = Logger.GetLogger(typeof(SystemProfileController));
+        private SystemProfileService service;
+
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
-            service = SystemProfileService.GetInstance(controllerContext.Request.Properties);
-            base.Initialize(controllerContext);
+            service = SystemProfileService.GetInstance(GetProperties());
+            base.OnActionExecuting(context);
         }
 
-        public FinanceResponse Find(SystemProfileRequest request)
+        [HttpPost]
+        public FinanceResponse Find([FromBody] SystemProfileRequest request)
         {
             var rsp = service.Find((SystemProfileCategory)request.Category, (SystemProfileKey)request.Key);
-            return new SystemProfileResponse { Content=rsp };
+            return new SystemProfileResponse { Content = rsp };
         }
 
+        [HttpPost]
         public FinanceResponse List()
         {
             var rsp = service.List();
             return new SystemProfileListResponse { Content = rsp };
         }
 
-        public FinanceResponse Udpate(SystemProfileUpdateRequest request)
+        [HttpPost]
+        public FinanceResponse Udpate([FromBody] SystemProfileUpdateRequest request)
         {
             service.Update((SystemProfileCategory)request.Category, (SystemProfileKey)request.Key, request.Value);
             return CreateResponse(FinanceResult.SUCCESS);
         }
 
-
-        public FinanceResponse MenuTables(MenuTablesRequest request)
+        [HttpPost]
+        public FinanceResponse MenuTables([FromBody] MenuTablesRequest request)
         {
             var rsp = service.MenuTables();
             return new MenuTablesResponse { Content = rsp };
         }
 
-        public FinanceResponse AllMenuTables(AllMenuTablesRequest request)
+        [HttpPost]
+        public FinanceResponse AllMenuTables([FromBody] AllMenuTablesRequest request)
         {
             var rsp = service.AllMenuTables();
             return new MenuTablesResponse { Content = rsp };
         }
 
-        public FinanceResponse SaveMenu(MenuTableSaveRequest request)
+        [HttpPost]
+        public FinanceResponse SaveMenu([FromBody] MenuTableSaveRequest request)
         {
             service.SaveMenu(request.Content);
             return CreateResponse(FinanceResult.SUCCESS);
         }
 
-        public FinanceResponse DeleteMenu(MenuTableDeleteRequest request)
+        [HttpPost]
+        public FinanceResponse DeleteMenu([FromBody] MenuTableDeleteRequest request)
         {
             service.DeleteMenu(request.Content);
             return CreateResponse(FinanceResult.SUCCESS);
         }
 
-        public AccessRightResponse AccessRight(AccessRightRequest request)
+        [HttpPost]
+        public AccessRightResponse AccessRight([FromBody] AccessRightRequest request)
         {
             var rsp = service.GetAccessRightList(request.id);
             return new AccessRightResponse { Content = rsp };
         }
 
-        public FinanceResponse SaveAccessRight(AccessRightSaveRequest request)
+        [HttpPost]
+        public FinanceResponse SaveAccessRight([FromBody] AccessRightSaveRequest request)
         {
             service.SaveAccessRight(request.Content);
             return CreateResponse(FinanceResult.SUCCESS);

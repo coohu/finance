@@ -1,29 +1,25 @@
-﻿using Finance.Account.SDK;
+using Finance.Account.SDK;
 using Finance.Account.SDK.Request;
 using Finance.Account.Service;
 using Finance.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Http;
-using System.Web.Http.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Finance.Controller
 {
     public class SerialNoController : FinanceController
     {
-        ILogger logger = Logger.GetLogger(typeof(SerialNoController));
-        SerialNoService service = null;
-        protected override void Initialize(HttpControllerContext controllerContext)
+        private readonly ILogger logger = Logger.GetLogger(typeof(SerialNoController));
+        private SerialNoService service;
+
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
-            service = SerialNoService.GetInstance(controllerContext.Request.Properties);
-            base.Initialize(controllerContext);
+            service = SerialNoService.GetInstance(GetProperties());
+            base.OnActionExecuting(context);
         }
 
         [HttpPost]
-        public FinanceResponse Get(SerialNoRequest request)
+        public FinanceResponse Get([FromBody] SerialNoRequest request)
         {
             long id = service.Get((SerialNoKey)request.SerialKey, request.Ex);
             return CreateIdResponse(id);
