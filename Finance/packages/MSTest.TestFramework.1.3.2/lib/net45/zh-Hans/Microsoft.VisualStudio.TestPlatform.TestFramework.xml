@@ -4112,7 +4112,7 @@
             <summary>
             初始化 <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/> 类的新实例。将使用数据提供程序、连接字符串、数据表和访问数据源的数据访问方法初始化此实例。
             </summary>
-            <param name="providerInvariantName">不变的数据提供程序名称，例如 System.Data.SqlClient</param>
+            <param name="providerInvariantName">不变的数据提供程序名称，例如 Microsoft.Data.SqlClient</param>
             <param name="connectionString">
             特定于数据提供程序的连接字符串。
             警告: 连接字符串可能包含敏感数据(例如密码)。

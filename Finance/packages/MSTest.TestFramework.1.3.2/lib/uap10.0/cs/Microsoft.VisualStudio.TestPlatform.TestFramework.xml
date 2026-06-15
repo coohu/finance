@@ -4108,7 +4108,7 @@
             <summary>
             Inicializuje novou instanci třídy <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/>. Tato instance se inicializuje s poskytovatelem dat, připojovacím řetězcem, tabulkou dat a přístupovou metodou k datům, pomocí kterých se získá přístup ke zdroji dat.
             </summary>
-            <param name="providerInvariantName">Název poskytovatele neutrálních dat, jako je System.Data.SqlClient</param>
+            <param name="providerInvariantName">Název poskytovatele neutrálních dat, jako je Microsoft.Data.SqlClient</param>
             <param name="connectionString">
             Připojovací řetězec specifický pro poskytovatele dat.
             UPOZORNĚNÍ: Připojovací řetězec může obsahovat citlivé údaje (třeba heslo).

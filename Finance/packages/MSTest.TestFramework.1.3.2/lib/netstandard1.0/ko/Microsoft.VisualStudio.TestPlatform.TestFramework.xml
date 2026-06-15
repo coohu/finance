@@ -4112,7 +4112,7 @@
             <summary>
             <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/> 클래스의 새 인스턴스를 초기화합니다. 이 인스턴스는 데이터 소스에 액세스할 데이터 공급자, 연결 문자열, 데이터 테이블 및 데이터 액세스 방법으로 초기화됩니다.
             </summary>
-            <param name="providerInvariantName">고정 데이터 공급자 이름(예: System.Data.SqlClient)</param>
+            <param name="providerInvariantName">고정 데이터 공급자 이름(예: Microsoft.Data.SqlClient)</param>
             <param name="connectionString">
             데이터 공급자별 연결 문자열. 
             경고: 연결 문자열에는 중요한 데이터(예: 암호)가 포함될 수 있습니다.

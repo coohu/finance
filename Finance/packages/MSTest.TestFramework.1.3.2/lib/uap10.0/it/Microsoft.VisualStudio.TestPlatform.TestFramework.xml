@@ -4112,7 +4112,7 @@
             <summary>
             Inizializza una nuova istanza della classe <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/>. Questa istanza verrà inizializzata con un provider di dati, la stringa di connessione, la tabella dati e il metodo di accesso ai dati per accedere all'origine dati.
             </summary>
-            <param name="providerInvariantName">Nome del provider di dati non dipendente da paese/area geografica, ad esempio System.Data.SqlClient</param>
+            <param name="providerInvariantName">Nome del provider di dati non dipendente da paese/area geografica, ad esempio Microsoft.Data.SqlClient</param>
             <param name="connectionString">
             Stringa di connessione specifica del provider di dati.
             AVVISO: la stringa di connessione può contenere dati sensibili, ad esempio una password.

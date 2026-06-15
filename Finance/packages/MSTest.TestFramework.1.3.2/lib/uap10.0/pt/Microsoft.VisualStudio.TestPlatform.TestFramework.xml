@@ -4112,7 +4112,7 @@
             <summary>
             Inicializa a nova instância da classe <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/>. Essa instância será inicializada com um provedor de dados, uma cadeia de conexão, uma tabela de dados e um método de acesso a dados para acessar a fonte de dados.
             </summary>
-            <param name="providerInvariantName">Nome do provedor de dados invariável, como System.Data.SqlClient</param>
+            <param name="providerInvariantName">Nome do provedor de dados invariável, como Microsoft.Data.SqlClient</param>
             <param name="connectionString">
             Cadeia de conexão específica do provedor de dados. 
             AVISO: a cadeia de conexão pode conter dados confidenciais (por exemplo, uma senha).

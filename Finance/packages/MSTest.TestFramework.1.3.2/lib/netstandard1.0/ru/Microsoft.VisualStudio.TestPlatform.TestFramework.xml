@@ -4113,7 +4113,7 @@
             <summary>
             Инициализирует новый экземпляр класса <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/> . Этот экземпляр инициализируется с поставщиком данных, строкой подключения, таблицей данных и методом доступа к данным для доступа к источнику данных.
             </summary>
-            <param name="providerInvariantName">Имя инвариантного поставщика данных, например System.Data.SqlClient</param>
+            <param name="providerInvariantName">Имя инвариантного поставщика данных, например Microsoft.Data.SqlClient</param>
             <param name="connectionString">
             Строка подключения для поставщика данных. 
             Внимание! Строка подключения может содержать конфиденциальные данные (например, пароль).

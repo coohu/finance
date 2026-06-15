@@ -4112,7 +4112,7 @@
             <summary>
             <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/> クラスの新しいインスタンスを初期化します。このインスタンスは、データ ソースにアクセスするためのデータ プロバイダー、接続文字列、データ テーブル、データ アクセス方法を指定して初期化されます。
             </summary>
-            <param name="providerInvariantName">System.Data.SqlClient などデータ プロバイダーの不変名</param>
+            <param name="providerInvariantName">Microsoft.Data.SqlClient などデータ プロバイダーの不変名</param>
             <param name="connectionString">
             データ プロバイダー固有の接続文字列。
             警告: 接続文字列には機微なデータ (パスワードなど) を含めることができます。

@@ -4112,7 +4112,7 @@
             <summary>
             Initialisiert eine neue Instanz der <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/>-Klasse. Diese Instanz wird mit einem Datenanbieter, einer Verbindungszeichenfolge, einer Datentabelle und einer Datenzugriffsmethode für den Zugriff auf die Daten initialisiert.
             </summary>
-            <param name="providerInvariantName">Invarianter Datenanbietername, z. B. "System.Data.SqlClient"</param>
+            <param name="providerInvariantName">Invarianter Datenanbietername, z. B. "Microsoft.Data.SqlClient"</param>
             <param name="connectionString">
             Die für den Datenanbieter spezifische Verbindungszeichenfolge.
             WARNUNG: Die Verbindungszeichenfolge kann sensible Daten (z. B. ein Kennwort) enthalten.

@@ -4112,7 +4112,7 @@
             <summary>
             Inicjuje nowe wystąpienie klasy <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/>. To wystąpienie zostanie zainicjowane z dostawcą danych, parametrami połączenia, tabelą danych i metodą dostępu do danych w celu uzyskania dostępu do źródła danych.
             </summary>
-            <param name="providerInvariantName">Niezmienna nazwa dostawcy danych, taka jak System.Data.SqlClient</param>
+            <param name="providerInvariantName">Niezmienna nazwa dostawcy danych, taka jak Microsoft.Data.SqlClient</param>
             <param name="connectionString">
             Parametry połączenia specyficzne dla dostawcy danych. 
             OSTRZEŻENIE: parametry połączenia mogą zawierać poufne dane (na przykład hasło).

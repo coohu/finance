@@ -4112,7 +4112,7 @@
             <summary>
             <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/> sınıfının yeni bir örneğini başlatır. Bu örnek bir veri sağlayıcısı, bağlantı dizesi, veri tablosu ve veri kaynağına erişmek için kullanılan veri erişimi metodu ile başlatılır.
             </summary>
-            <param name="providerInvariantName">System.Data.SqlClient gibi değişmez veri sağlayıcısı adı</param>
+            <param name="providerInvariantName">Microsoft.Data.SqlClient gibi değişmez veri sağlayıcısı adı</param>
             <param name="connectionString">
             Veri sağlayıcısına özgü bağlantı dizesi.
             UYARI: Bağlantı dizesi, hassas veriler (parola gibi) içerebilir.

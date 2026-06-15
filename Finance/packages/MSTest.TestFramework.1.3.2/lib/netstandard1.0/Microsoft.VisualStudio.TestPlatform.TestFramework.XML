@@ -4326,7 +4326,7 @@
             <summary>
             Initializes a new instance of the <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/> class. This instance will be initialized with a data provider, connection string, data table and data access method to access the data source.
             </summary>
-            <param name="providerInvariantName">Invariant data provider name, such as System.Data.SqlClient</param>
+            <param name="providerInvariantName">Invariant data provider name, such as Microsoft.Data.SqlClient</param>
             <param name="connectionString">
             Data provider specific connection string.
             WARNING: The connection string can contain sensitive data (for example, a password).

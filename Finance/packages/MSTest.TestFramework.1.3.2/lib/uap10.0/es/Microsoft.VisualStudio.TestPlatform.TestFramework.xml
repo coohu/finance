@@ -4110,7 +4110,7 @@
             <summary>
             Inicializa una nueva instancia de la clase <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/>. Esta instancia se inicializará con un proveedor de datos, una cadena de conexión, una tabla de datos y un método de acceso a datos para acceder al origen de datos.
             </summary>
-            <param name="providerInvariantName">Nombre invariable del proveedor de datos, como System.Data.SqlClient</param>
+            <param name="providerInvariantName">Nombre invariable del proveedor de datos, como Microsoft.Data.SqlClient</param>
             <param name="connectionString">
             Cadena de conexión específica del proveedor de datos. 
             ADVERTENCIA: La cadena de conexión puede contener información confidencial (por ejemplo, una contraseña).

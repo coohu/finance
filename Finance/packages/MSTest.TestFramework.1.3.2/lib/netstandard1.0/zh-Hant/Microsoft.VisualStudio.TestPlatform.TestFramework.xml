@@ -4112,7 +4112,7 @@
             <summary>
             初始化 <see cref="T:Microsoft.VisualStudio.TestTools.UnitTesting.DataSourceAttribute"/> 類別的新執行個體。將使用資料提供者、連接字串、運算列表和資料存取方法將這個執行個體初始化，以存取資料來源。
             </summary>
-            <param name="providerInvariantName">非變異資料提供者名稱 (例如 System.Data.SqlClient)</param>
+            <param name="providerInvariantName">非變異資料提供者名稱 (例如 Microsoft.Data.SqlClient)</param>
             <param name="connectionString">
             資料提供者特定連接字串。
             警告: 連接字串可能會包含敏感性資料 (例如，密碼)。
