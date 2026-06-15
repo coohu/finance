@@ -1,10 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 
 namespace Finance.Utils
 {
@@ -17,7 +19,9 @@ namespace Finance.Utils
             get
             {
                 if (!_instanceList.ContainsKey(-1))
-                    _instanceList.Add(-1, new DBHelper(ConfigHelper.Instance.XmlReadConnectionString("default")));
+                    _instanceList.Add(-1, new DBHelper(
+                        ConfigHelper.Instance.XmlReadConnectionString("default"),
+                        ConfigHelper.Instance.XmlReadProviderName("default")));
                 return _instanceList[-1];
             }
             set
@@ -27,7 +31,7 @@ namespace Finance.Utils
                 else
                     _instanceList[-1] = value;
             }
-        } 
+        }
 
         public static DBHelper GetInstance(IDictionary<string,object> ctx)
         {
@@ -39,26 +43,84 @@ namespace Finance.Utils
                     return DefaultInstance;
 
                 var conStr =  DefaultInstance.ExecuteScalar("select _connstr from _AccountCtl where _id = " + tid);
-                _instanceList.Add(tid, new DBHelper(conStr.ToString()));
+                _instanceList.Add(tid, new DBHelper(conStr.ToString(), DefaultInstance._providerName));
             }
-                
+
             return _instanceList[tid];
         }
 
         #region 定义
         private object _lock = null;
-        private SqlConnection con;
+        private DbConnection con;
         private string strConnection;
+        private string _providerName;
+        private bool IsSqlite => _providerName == "Microsoft.Data.Sqlite";
 
-        public DBHelper(string connectString)
+        public DBHelper(string connectString, string providerName = "Microsoft.Data.SqlClient")
         {
             _lock = new object();
             strConnection = connectString;
+            _providerName = providerName;
         }
 
-
-       
         #endregion 定义
+
+        private DbConnection CreateConnection()
+        {
+            if (IsSqlite)
+                return new SqliteConnection(strConnection);
+            return new SqlConnection(strConnection);
+        }
+
+        private DataTable FillDataTable(DbCommand cmd)
+        {
+            DataTable dt = new DataTable();
+            using (DbDataReader reader = cmd.ExecuteReader())
+            {
+                for (int i = 0; i < reader.FieldCount; i++)
+                    dt.Columns.Add(reader.GetName(i), reader.GetFieldType(i));
+                object[] values = new object[reader.FieldCount];
+                while (reader.Read())
+                {
+                    reader.GetValues(values);
+                    dt.Rows.Add((object[])values.Clone());
+                }
+            }
+            return dt;
+        }
+
+        private DbParameter[] ConvertParameters(DbParameter[] prams)
+        {
+            if (prams == null || !IsSqlite) return prams;
+            var result = new SqliteParameter[prams.Length];
+            for (int i = 0; i < prams.Length; i++)
+                result[i] = new SqliteParameter(prams[i].ParameterName, prams[i].Value ?? DBNull.Value);
+            return result;
+        }
+
+        private void BulkInsertSqlite(DbConnection conn, DbTransaction trans, DataTable dt, string tableName)
+        {
+            var colNames = dt.Columns.Cast<DataColumn>().Select(c => c.ColumnName).ToList();
+            var paramNames = colNames.Select(c => "@" + c).ToList();
+            var sql = string.Format("INSERT INTO {0} ({1}) VALUES ({2})",
+                tableName,
+                string.Join(",", colNames),
+                string.Join(",", paramNames));
+            foreach (DataRow row in dt.Rows)
+            {
+                DbCommand cmd = conn.CreateCommand();
+                cmd.Transaction = trans;
+                cmd.CommandText = sql;
+                for (int i = 0; i < colNames.Count; i++)
+                {
+                    DbParameter p = cmd.CreateParameter();
+                    p.ParameterName = paramNames[i];
+                    p.Value = row[colNames[i]] ?? DBNull.Value;
+                    cmd.Parameters.Add(p);
+                }
+                cmd.ExecuteNonQuery();
+            }
+        }
 
         #region 通用方法
 
@@ -86,20 +148,17 @@ namespace Finance.Utils
         /// <returns></returns>
         public int ExecuteSql(String Sqlstr)
         {
-
-            String ConnStr = GetSqlConnection();
             int i;
-            using (SqlConnection conn = new SqlConnection(ConnStr))
+            using (DbConnection conn = CreateConnection())
             {
                 conn.Open();
-                using (SqlTransaction trans = conn.BeginTransaction())
+                using (DbTransaction trans = conn.BeginTransaction())
                 {
                     try
                     {
-                        SqlCommand cmd = new SqlCommand();
+                        DbCommand cmd = conn.CreateCommand();
                         cmd.CommandTimeout = 120;
                         cmd.Transaction = trans;
-                        cmd.Connection = conn;
                         cmd.CommandText = Sqlstr;
                         i = cmd.ExecuteNonQuery();
                         trans.Commit();
@@ -119,19 +178,17 @@ namespace Finance.Utils
         {
             lock (_lock)
             {
-                String ConnStr = GetSqlConnection();
                 int i;
-                using (SqlConnection conn = new SqlConnection(ConnStr))
+                using (DbConnection conn = CreateConnection())
                 {
                     conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction())
+                    using (DbTransaction trans = conn.BeginTransaction())
                     {
                         try
                         {
-                            SqlCommand cmd = new SqlCommand();
+                            DbCommand cmd = conn.CreateCommand();
                             cmd.CommandTimeout = 3600;
                             cmd.Transaction = trans;
-                            cmd.Connection = conn;
                             cmd.CommandText = Sqlstr;
                             i = cmd.ExecuteNonQuery();
                             trans.Commit();
@@ -156,24 +213,23 @@ namespace Finance.Utils
         /// <param name="Sqlstr">SQL语句</param>
         /// <param name="param">参数对象数组</param>
         /// <returns></returns>
-        public int ExecuteSql(String Sqlstr, SqlParameter[] param)
+        public int ExecuteSql(String Sqlstr, DbParameter[] param)
         {
             lock (_lock)
             {
                 int iResult = 0;
-                String ConnStr = GetSqlConnection();
-                using (SqlConnection conn = new SqlConnection(ConnStr))
+                using (DbConnection conn = CreateConnection())
                 {
                     conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction())
+                    using (DbTransaction trans = conn.BeginTransaction())
                     {
                         try
                         {
-                            SqlCommand cmd = new SqlCommand();
+                            DbCommand cmd = conn.CreateCommand();
                             cmd.Transaction = trans;
-                            cmd.Connection = conn;
                             cmd.CommandText = Sqlstr;
-                            cmd.Parameters.AddRange(param);
+                            foreach (DbParameter p in ConvertParameters(param))
+                                cmd.Parameters.Add(p);
                             if (conn.State == ConnectionState.Closed) conn.Open();
                             cmd.ExecuteNonQuery();
                             trans.Commit();
@@ -198,11 +254,10 @@ namespace Finance.Utils
         {
             lock (_lock)
             {
-                String ConnStr = GetSqlConnection();
-                using (SqlConnection conn = new SqlConnection(ConnStr))
+                using (DbConnection conn = CreateConnection())
                 {
                     conn.Open();
-                    SqlCommand cmd = conn.CreateCommand();
+                    DbCommand cmd = conn.CreateCommand();
                     cmd.CommandText = sqltxt;
                     return cmd.ExecuteScalar();
                 }
@@ -219,24 +274,23 @@ namespace Finance.Utils
             {
                 int iResult = 0;
                 //StringBuilder sb = new StringBuilder();
-                String ConnStr = GetSqlConnection();
 
-                using (SqlConnection conn = new SqlConnection(ConnStr))
+                using (DbConnection conn = CreateConnection())
                 {
                     conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction())
+                    using (DbTransaction trans = conn.BeginTransaction())
                     {
                         try
                         {
                             int result = 0;
-                            SqlCommand cmd = new SqlCommand();
+                            DbCommand cmd = conn.CreateCommand();
                             cmd.Transaction = trans;
-                            cmd.Connection = conn;
                             //循环执行sql语句
                             foreach (KeyValuePair<string, object> entry in SQLStringList)
                             {
                                 cmd.CommandText = entry.Key.ToString().Substring(0, entry.Key.ToString().IndexOf("|*|"));
-                                cmd.Parameters.AddRange((SqlParameter[])entry.Value);
+                                foreach (DbParameter p in ConvertParameters((DbParameter[])entry.Value))
+                                    cmd.Parameters.Add(p);
                                 //string strSqlValue = String.Empty;
                                 //foreach (SqlParameter sp in cmd.Parameters)
                                 //{
@@ -286,7 +340,7 @@ namespace Finance.Utils
         /// <param name="strSql">执行Sql</param>
         /// <param name="param">参数</param>
         /// <returns></returns>
-        public int ExecuteSql(SqlTransaction trans, SqlCommand cmd, SqlConnection conn, string strSql, SqlParameter[] param)
+        public int ExecuteSql(DbTransaction trans, DbCommand cmd, DbConnection conn, string strSql, DbParameter[] param)
         {
             lock (_lock)
             {
@@ -296,7 +350,8 @@ namespace Finance.Utils
                     cmd.Transaction = trans;
                     cmd.Connection = conn;
                     cmd.CommandText = strSql;
-                    cmd.Parameters.AddRange(param);
+                    foreach (DbParameter p in ConvertParameters(param))
+                        cmd.Parameters.Add(p);
                     cmd.ExecuteNonQuery();
                     iResult = 1;
                 }
@@ -318,17 +373,15 @@ namespace Finance.Utils
         /// </summary>
         /// <param name="Sqlstr">执行Sql</param>
         /// <returns></returns>
-        public SqlDataReader ExecuteReader(String Sqlstr)
+        public DbDataReader ExecuteReader(String Sqlstr)
         {
             lock (_lock)
             {
 
-                String ConnStr = GetSqlConnection();
-                SqlConnection conn = new SqlConnection(ConnStr);//返回DataReader时,是不可以用using()的
+                DbConnection conn = CreateConnection();//返回DataReader时,是不可以用using()的
                 try
                 {
-                    SqlCommand cmd = new SqlCommand();
-                    cmd.Connection = conn;
+                    DbCommand cmd = conn.CreateCommand();
                     cmd.CommandText = Sqlstr;
                     conn.Open();
                     return cmd.ExecuteReader(System.Data.CommandBehavior.CloseConnection);//关闭关联的Connection
@@ -351,15 +404,13 @@ namespace Finance.Utils
         /// <returns></returns>
         public DataTable ExecuteDt(String Sqlstr)
         {
-
-            String ConnStr = GetSqlConnection();
-            using (SqlConnection conn = new SqlConnection(ConnStr))
+            using (DbConnection conn = CreateConnection())
             {
-                SqlDataAdapter da = new SqlDataAdapter(Sqlstr, conn);
-                da.SelectCommand.CommandTimeout = 300;
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-                return dt;
+                conn.Open();
+                DbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = Sqlstr;
+                cmd.CommandTimeout = 300;
+                return FillDataTable(cmd);
             }
 
         }
@@ -375,13 +426,14 @@ namespace Finance.Utils
         /// <returns></returns>
         public DataSet ExecuteDs(String Sqlstr)
         {
-
-            String ConnStr = GetSqlConnection();
-            using (SqlConnection conn = new SqlConnection(ConnStr))
+            using (DbConnection conn = CreateConnection())
             {
-                SqlDataAdapter da = new SqlDataAdapter(Sqlstr, conn);
+                conn.Open();
+                DbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = Sqlstr;
                 DataSet ds = new DataSet();
-                da.Fill(ds);
+                DataTable dt = FillDataTable(cmd);
+                ds.Tables.Add(dt);
                 return ds;
             }
 
@@ -395,9 +447,29 @@ namespace Finance.Utils
         {
             lock (_lock)
             {
-                SqlConnection conn = new SqlConnection(GetSqlConnection());
-                conn.Open();
-                using (SqlBulkCopy sqlBC = new SqlBulkCopy(conn))
+                if (IsSqlite)
+                {
+                    using (DbConnection conn = CreateConnection())
+                    {
+                        conn.Open();
+                        DbTransaction trans = conn.BeginTransaction();
+                        try
+                        {
+                            BulkInsertSqlite(conn, trans, dt, tableName);
+                            trans.Commit();
+                        }
+                        catch
+                        {
+                            trans.Rollback();
+                            throw;
+                        }
+                    }
+                    return;
+                }
+
+                SqlConnection sqlConn = new SqlConnection(GetSqlConnection());
+                sqlConn.Open();
+                using (SqlBulkCopy sqlBC = new SqlBulkCopy(sqlConn))
                 {
                     sqlBC.BatchSize = 1000;
                     sqlBC.BulkCopyTimeout = 60;
@@ -409,10 +481,9 @@ namespace Finance.Utils
                     }
                     sqlBC.WriteToServer(dt);
                 }
-                conn.Close();
+                sqlConn.Close();
             }
         }
-
 
 
 
@@ -461,7 +532,7 @@ namespace Finance.Utils
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="procName"></param>
         /// <param name="prams"></param>
@@ -473,7 +544,7 @@ namespace Finance.Utils
                 SqlCommand cmd = CreateCommand(procName, prams);
                 SqlDataAdapter adp = new SqlDataAdapter(cmd);
                 DataSet ds = new DataSet();
-                adp.Fill(ds);              
+                adp.Fill(ds);
                 return ds;
             }
         }
@@ -578,8 +649,7 @@ namespace Finance.Utils
             {
                 // 确定连接是打开的
                 Open();
-                String ConnStr = GetSqlConnection();
-                SqlCommand cmd = new SqlCommand(procName, con);
+                SqlCommand cmd = new SqlCommand(procName, (SqlConnection)con);
                 cmd.CommandType = CommandType.StoredProcedure;
                 // 添加存储过程的输入参数列表
                 if (prams != null)
@@ -652,14 +722,12 @@ namespace Finance.Utils
         {
             lock (_lock)
             {
-                String ConnStr = GetSqlConnection();
                 int i;
-                using (SqlConnection conn = new SqlConnection(ConnStr))
+                using (DbConnection conn = CreateConnection())
                 {
                     conn.Open();
-                    SqlCommand cmd = new SqlCommand();
+                    DbCommand cmd = conn.CreateCommand();
                     cmd.CommandTimeout = 3600;
-                    cmd.Connection = conn;
                     cmd.CommandText = Sqlstr;
                     i = cmd.ExecuteNonQuery();
                     return i;
@@ -679,8 +747,7 @@ namespace Finance.Utils
         {
             lock (_lock)
             {
-                String ConnStr = GetSqlConnection();
-                using (SqlConnection conn = new SqlConnection(ConnStr))
+                using (DbConnection conn = CreateConnection())
                 {
                     conn.Open();
                     return true;
@@ -701,7 +768,7 @@ namespace Finance.Utils
                 if (con == null)
                 {
                     //这里不仅需要using System.Configuration;还要在引用目录里添加
-                    con = new SqlConnection(GetSqlConnection());
+                    con = CreateConnection();
                     con.Open();
                 }
                 else if (con.State == ConnectionState.Closed)
@@ -758,7 +825,7 @@ namespace Finance.Utils
         public dynamic BeginTransaction()
         {
             dynamic tran = new System.Dynamic.ExpandoObject();
-            con = new SqlConnection(GetSqlConnection());
+            con = CreateConnection();
             con.Open();
             tran.conn = con;
             tran.trans = tran.conn.BeginTransaction();
@@ -770,16 +837,20 @@ namespace Finance.Utils
         /// <param name="tran">BeginTransaction返回的对象</param>
         /// <param name="Sqlstr"></param>
         /// <param name="param"></param>
-        public int ExecuteSql(dynamic tran, string Sqlstr, SqlParameter[] param = null)
+        public int ExecuteSql(dynamic tran, string Sqlstr, DbParameter[] param = null)
         {
-            SqlCommand cmd = new SqlCommand();
-            cmd.Transaction = tran.trans;
-            cmd.Connection = tran.conn;
+            DbConnection conn = (DbConnection)tran.conn;
+            DbTransaction trans = (DbTransaction)tran.trans;
+            DbCommand cmd = conn.CreateCommand();
+            cmd.Transaction = trans;
             cmd.CommandText = Sqlstr;
             if (param != null)
-                cmd.Parameters.AddRange(param);
-            if (tran.conn.State == ConnectionState.Closed)
-                tran.conn.Open();
+            {
+                foreach (DbParameter p in ConvertParameters(param))
+                    cmd.Parameters.Add(p);
+            }
+            if (conn.State == ConnectionState.Closed)
+                conn.Open();
             return cmd.ExecuteNonQuery();
         }
         /// <summary>
@@ -790,27 +861,34 @@ namespace Finance.Utils
         /// <returns></returns>
         public DataTable ExecuteDt(dynamic tran, string Sqlstr)
         {
-            SqlCommand cmd = new SqlCommand();
+            DbConnection conn = (DbConnection)tran.conn;
+            DbTransaction trans = (DbTransaction)tran.trans;
+            DbCommand cmd = conn.CreateCommand();
             cmd.CommandTimeout = 300;
-            cmd.Transaction = tran.trans;
-            cmd.Connection = tran.conn;
+            cmd.Transaction = trans;
             cmd.CommandText = Sqlstr;
-            SqlDataAdapter da = new SqlDataAdapter(cmd);
-            DataTable dt = new DataTable();
-            da.Fill(dt);
-            return dt;
+            return FillDataTable(cmd);
         }
 
         public void InsertTable(dynamic tran, DataTable dt, string tableName)
         {
+            DbConnection conn = (DbConnection)tran.conn;
+            DbTransaction trans = (DbTransaction)tran.trans;
+
+            if (IsSqlite)
+            {
+                BulkInsertSqlite(conn, trans, dt, tableName);
+                return;
+            }
+
             var dtT = ExecuteDt("select name from syscolumns where id=(select max(id) from sysobjects where xtype='u' and name='"+ tableName +"')");
             if (dtT == null)
                 throw new Exception(string.Format("table {0} not exists in db.", tableName));
 
-            using (SqlBulkCopy sqlBC = new SqlBulkCopy(tran.conn,SqlBulkCopyOptions.Default,tran.trans))
+            using (SqlBulkCopy sqlBC = new SqlBulkCopy((SqlConnection)conn, SqlBulkCopyOptions.Default, (SqlTransaction)trans))
             {
                 sqlBC.BatchSize = 1000;
-                sqlBC.BulkCopyTimeout = 60;              
+                sqlBC.BulkCopyTimeout = 60;
                 sqlBC.DestinationTableName = tableName;
                 foreach (DataColumn dc in dt.Columns)
                 {
@@ -841,11 +919,10 @@ namespace Finance.Utils
         {
             lock (_lock)
             {
-                String ConnStr = GetSqlConnection();
-                using (SqlConnection conn = new SqlConnection(ConnStr))
+                using (DbConnection conn = CreateConnection())
                 {
                     conn.Open();
-                    SqlCommand cmd = conn.CreateCommand();
+                    DbCommand cmd = conn.CreateCommand();
                     cmd.CommandText = sqltxt;
                     return cmd.ExecuteScalar();
                 }
@@ -866,7 +943,7 @@ namespace Finance.Utils
         /// </summary>
         /// <param name="tran">BeginTransaction返回的对象</param>
         public void RollbackTransaction(dynamic tran)
-        {            
+        {
             tran.trans.Rollback();
             tran.conn.Close();
         }

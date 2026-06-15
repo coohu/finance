@@ -29,6 +29,16 @@ namespace Finance.Utils
             return el.GetAttribute("connectionString");
         }
 
+        public string XmlReadProviderName(string name)
+        {
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.Load(file);
+            XmlNode root = xDoc.SelectSingleNode("configuration");
+            XmlNode node = root.SelectSingleNode("connectionStrings/add[@name='" + name + "']");
+            XmlElement el = node as XmlElement;
+            return el?.GetAttribute("providerName") ?? "Microsoft.Data.SqlClient";
+        }
+
         public string XmlReadAppSetting(string key)
         {
             XmlDocument xDoc = new XmlDocument();
