@@ -56,7 +56,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Publish
-        run: dotnet publish Finance/Finance/Finance.csproj -c Release -r ${{ matrix.runtime }} -p:TargetFramework=net8.0 -p:UseWindowsForms=false --self-contained -o publish/${{ matrix.runtime }}
+        run: dotnet publish Finance/Finance/Finance.csproj -c Release -r ${{ matrix.runtime }} -p:TargetFramework=net8.0 -p:UseWindowsForms=false -p:PlatformTarget=AnyCPU --self-contained -o publish/${{ matrix.runtime }}
 
       - name: Package
         run: zip -r server-${{ matrix.runtime }}.zip publish/${{ matrix.runtime }}/
